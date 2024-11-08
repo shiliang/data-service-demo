@@ -1,7 +1,6 @@
 package main
 
 import (
-	"chainweaver.org.cn/chainweaver/mira/mira-data-service-client"
 	"fmt"
 	"github.com/apache/arrow/go/v15/arrow"
 	"github.com/apache/arrow/go/v15/arrow/array"
@@ -56,7 +55,6 @@ func generateArrowFile(filePath string) error {
 }
 
 func validateArrowFile(filePath string) error {
-	client.NewDataServiceClient()
 	file, err := os.Open(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to open file: %v", err)

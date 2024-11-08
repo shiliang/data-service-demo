@@ -13,6 +13,8 @@ import (
 	client "chainweaver.org.cn/chainweaver/mira/mira-data-service-client"
 	pb "chainweaver.org.cn/chainweaver/mira/mira-data-service-client/proto/datasource"
 	"context"
+	"fmt"
+	"io"
 	"log"
 )
 
@@ -34,7 +36,30 @@ func main() {
 		AssetName:   "datatest-students",
 		ChainInfoId: 1,
 		DbFields:    []string{"name"},
-		RequestId:   "8a5ccd24-aa46-4fae-ad0f-b4d241a850f9",
 		PlatformId:  1,
 	}
+
+	// 调用 ReadBatchData 方法获取流式数据
+	stream, err := dataServiceClient.ReadBatchData(ctx, request)
+	if err != nil {
+		log.Fatalf("failed to call ReadBatchData: %v", err)
+	}
+
+	// 遍历流式响应数据
+	for {
+		// 从流中接收 OSSReadResponse
+		response, err := stream.Recv()
+		if err == io.EOF {
+			// 所有数据已接收完毕
+			break
+		}
+		if err != nil {
+			log.Fatalf("failed to receive data from stream: %v", err)
+		}
+
+		// 处理接收到的 OSSReadResponse 数据
+		fmt.Printf("Received chunk: %s\n", response.Chunk)
+	}
+
+	fmt.Println("Data streaming completed successfully.")
 }

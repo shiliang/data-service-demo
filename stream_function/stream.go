@@ -81,8 +81,7 @@ func main() {
 		AssetName:   "datatest-students",
 		ChainInfoId: 1,
 		DbFields:    []string{"name"},
-		// RequestId:   "8a5ccd24-aa46-4fae-ad0f-b4d241a850f9",
-		PlatformId: 1,
+		PlatformId:  1,
 	}
 
 	// 调用 ReadStream 方法
