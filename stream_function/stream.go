@@ -78,10 +78,12 @@ func main() {
 
 	// 创建StreamReadRequest实例
 	request := &pb.StreamReadRequest{
-		AssetName:   "datatest-students",
+		AssetName:   "kingbasedata",
 		ChainInfoId: 1,
 		DbFields:    []string{"name"},
 		PlatformId:  1,
+		// FilterNames:  []string{"name"}, // 指定过滤条件
+		// FilterValues: []string{"Alice"},
 	}
 
 	// 调用 ReadStream 方法
