@@ -32,11 +32,23 @@ func main() {
 		log.Fatalf("failed to initialize DataServiceClient: %v", err)
 	}
 
+	// 创建 SparkConfig 实例
+	sparkConfig := &pb.SparkConfig{
+		DynamicAllocationEnabled:      true,
+		DynamicAllocationMinExecutors: 2,
+		DynamicAllocationMaxExecutors: 10,
+		ExecutorMemoryMB:              4096,
+		ExecutorCores:                 4,
+		DriverMemoryMB:                2048,
+		DriverCores:                   2,
+	}
+
 	request := &pb.BatchReadRequest{
 		AssetName:   "datatest-students",
 		ChainInfoId: 1,
 		DbFields:    []string{"name"},
 		PlatformId:  1,
+		SparkConfig: sparkConfig,
 	}
 
 	// 调用 ReadBatchData 方法获取流式数据
