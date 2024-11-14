@@ -3,7 +3,7 @@ module test
 go 1.23.0
 
 require (
-	chainweaver.org.cn/chainweaver/mira/mira-data-service-client v0.0.0-20241112080149-35ee4255907c
+	chainweaver.org.cn/chainweaver/mira/mira-data-service-client v0.0.0-20241114032655-ead19b657b43
 	github.com/apache/arrow/go/v15 v15.0.2
 )
 

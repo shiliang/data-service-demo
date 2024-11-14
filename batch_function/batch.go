@@ -37,16 +37,24 @@ func main() {
 		DynamicAllocationEnabled:      true,
 		DynamicAllocationMinExecutors: 2,
 		DynamicAllocationMaxExecutors: 10,
-		ExecutorMemoryMB:              4096,
+		ExecutorMemoryMB:              5096,
 		ExecutorCores:                 4,
-		DriverMemoryMB:                2048,
+		DriverMemoryMB:                3048,
 		DriverCores:                   2,
 	}
 
-	request := &pb.BatchReadRequest{
+	/*request := &pb.BatchReadRequest{
 		AssetName:   "datatest-students",
 		ChainInfoId: 1,
 		DbFields:    []string{"name"},
+		PlatformId:  1,
+		SparkConfig: sparkConfig,
+	}*/
+
+	request := &pb.BatchReadRequest{
+		AssetName:   "datatest",
+		ChainInfoId: 1,
+		DbFields:    []string{"tcol01"},
 		PlatformId:  1,
 		SparkConfig: sparkConfig,
 	}

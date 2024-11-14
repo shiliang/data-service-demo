@@ -2,8 +2,8 @@
 *
 
 	@author: shiliang
-	@date: 2024/11/7
-	@note: 流式读取接口调用示例
+	@date: 2024/11/14
+	@note:
 
 *
 */
@@ -11,7 +11,7 @@ package main
 
 import (
 	"bytes"
-	"chainweaver.org.cn/chainweaver/mira/mira-data-service-client"
+	client "chainweaver.org.cn/chainweaver/mira/mira-data-service-client"
 	pb "chainweaver.org.cn/chainweaver/mira/mira-data-service-client/proto/datasource"
 	"context"
 	"fmt"
@@ -76,24 +76,13 @@ func main() {
 		log.Fatalf("failed to initialize DataServiceClient: %v", err)
 	}
 
-	// 创建排序规则
-	sortRules := []*pb.SortRule{
-		{FieldName: "score", SortOrder: pb.SortOrder_ASC},
+	request := &pb.InternalReadRequest{
+		TableName: "test_data",
+		DbFields:  []string{"id", "data"},
+		DbName:    "stream_task",
 	}
 
-	// 创建StreamReadRequest实例
-	request := &pb.StreamReadRequest{
-		AssetName:   "kingbasedata",
-		ChainInfoId: 1,
-		DbFields:    []string{"score"},
-		PlatformId:  1,
-		SortRules:   sortRules,
-		// FilterNames:  []string{"name"}, // 指定过滤条件
-		// FilterValues: []string{"Alice"},
-	}
-
-	// 调用 ReadStream 方法
-	stream, err := dataServiceClient.ReadStream(ctx, request)
+	stream, err := dataServiceClient.ReadInternalDBData(ctx, request)
 	if err != nil {
 		log.Fatalf("Failed to read stream: %v", err)
 	}
@@ -142,5 +131,4 @@ func main() {
 			}
 		}
 	}
-
 }
