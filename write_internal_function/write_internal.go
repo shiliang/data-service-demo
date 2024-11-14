@@ -66,7 +66,7 @@ func main() {
 	request := &pb.WriterInternalDataRequest{
 		ArrowBatch: buf.Bytes(),
 		DbName:     "stream_task",
-		TableName:  "test_data",
+		TableName:  "defrgt",
 	}
 
 	response := dataServiceClient.WriteInternalDBData(ctx, request)
