@@ -19,9 +19,7 @@ import (
 	"github.com/apache/arrow/go/v15/arrow/array"
 	"github.com/apache/arrow/go/v15/arrow/ipc"
 	"github.com/apache/arrow/go/v15/arrow/memory"
-	"io"
 	"log"
-	"os"
 )
 
 func main() {
@@ -63,6 +61,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to serialize record: %v", err)
 	}
+	fmt.Printf("Serialized record size: %d bytes\n", buf.Len())
 
 	request := &pb.WriterInternalDataRequest{
 		ArrowBatch: buf.Bytes(),
@@ -74,43 +73,27 @@ func main() {
 	fmt.Println(response)
 }
 
-func serializeRecord(record arrow.Record) (*bytes.Buffer, error) { // 修改为值类型
-	// 创建一个临时文件
-	tempFile, err := os.CreateTemp("", "arrow-ipc-*.arrow")
-	if err != nil {
-		return nil, err
-	}
-	defer tempFile.Close()
-	defer os.Remove(tempFile.Name())
+func serializeRecord(record arrow.Record) (*bytes.Buffer, error) {
+	// 创建一个字节缓冲区用于存储序列化的 IPC 数据
+	buf := new(bytes.Buffer)
 
-	// 创建 Arrow IPC 写入器
-	writer, err := ipc.NewFileWriter(tempFile, ipc.WithSchema(record.Schema()), ipc.WithAllocator(memory.DefaultAllocator))
-	if err != nil {
-		return nil, err
+	// 创建 Arrow IPC 文件写入器
+	writer := ipc.NewWriter(buf, ipc.WithSchema(record.Schema()), ipc.WithAllocator(memory.DefaultAllocator))
+	if writer == nil {
+		return nil, fmt.Errorf("failed to create IPC writer")
 	}
 	defer writer.Close()
 
-	// 写入记录批次
+	// 将记录写入到 IPC 文件
 	if err := writer.Write(record); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to write record to IPC: %v", err)
 	}
 
 	// 关闭写入器
 	if err := writer.Close(); err != nil {
-		return nil, err
+		log.Fatalf("Failed to close IPC writer: %v", err)
 	}
 
-	// 读取临时文件内容
-	_, err = tempFile.Seek(0, io.SeekStart)
-	if err != nil {
-		return nil, err
-	}
-
-	buf := new(bytes.Buffer)
-	_, err = io.Copy(buf, tempFile)
-	if err != nil {
-		return nil, err
-	}
-
+	// 返回包含 IPC 数据的字节缓冲区
 	return buf, nil
 }
