@@ -31,10 +31,10 @@ func main() {
 	}
 
 	bucketName := "data-service"
-	objectName := "testdata.txt"
-	filePath := "C:\\software\\go\\src\\test\\oss_function\\testdata.txt"
-
-	response, err := dataServiceClient.WriteOSSData(ctx, bucketName, objectName, filePath)
+	objectName := "bytedata.txt"
+	// filePath := "C:\\software\\go\\src\\test\\oss_function\\testdata.txt"
+	data1 := []byte("some data")
+	response, err := dataServiceClient.WriteOSSData(ctx, bucketName, objectName, "", data1)
 	if err != nil {
 		log.Fatalf("Failed to write OSS data: %v", err)
 	}
