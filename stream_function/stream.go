@@ -83,13 +83,21 @@ func main() {
 
 	// 创建StreamReadRequest实例
 	request := &pb.StreamReadRequest{
-		AssetName:   "kingbasedata",
-		ChainInfoId: 1,
-		DbFields:    []string{"score"},
-		PlatformId:  1,
-		SortRules:   sortRules,
-		// FilterNames:  []string{"name"}, // 指定过滤条件
-		// FilterValues: []string{"Alice"},
+		AssetName:       "datatest",
+		ChainInfoId:     1,
+		DbFields:        []string{"tcol14"},
+		PlatformId:      1,
+		SortRules:       sortRules,
+		FilterNames:     []string{"tcol08"}, // 指定过滤条件
+		FilterOperators: []pb.FilterOperator{pb.FilterOperator_IN_OPERATOR},
+		FilterValues: []*pb.FilterValue{
+			//{
+			//	StrValues: []string{"Alice"},
+			//},
+			{
+				FloatValues: []float64{1.46},
+			},
+		},
 	}
 
 	// 调用 ReadStream 方法

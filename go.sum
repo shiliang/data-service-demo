@@ -1,5 +1,5 @@
-chainweaver.org.cn/chainweaver/mira/mira-data-service-client v0.0.0-20241115054535-0ab3fa338302 h1:DIN9VvoV2rkuhyu2gG3XOgAWTZ7SAp16XXIfb7t0jQw=
-chainweaver.org.cn/chainweaver/mira/mira-data-service-client v0.0.0-20241115054535-0ab3fa338302/go.mod h1:hg5kKLCMgoClkkV2Cl5xGNWavZ+rLPh+chJlMIq+fVE=
+chainweaver.org.cn/chainweaver/mira/mira-data-service-client v0.0.0-20241118084524-e5b8de3c1294 h1:/R14GKVXiSVe4uaMxWZrJQ+GbmsuraCPGXXQcYK8hX8=
+chainweaver.org.cn/chainweaver/mira/mira-data-service-client v0.0.0-20241118084524-e5b8de3c1294/go.mod h1:hg5kKLCMgoClkkV2Cl5xGNWavZ+rLPh+chJlMIq+fVE=
 github.com/apache/arrow/go/v15 v15.0.2 h1:60IliRbiyTWCWjERBCkO1W4Qun9svcYoZrSLcyOsMLE=
 github.com/apache/arrow/go/v15 v15.0.2/go.mod h1:DGXsR3ajT524njufqf95822i+KTh+yea1jass9YXgjA=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=

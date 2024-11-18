@@ -31,7 +31,7 @@ func main() {
 	}
 
 	request := &pb.TableInfoRequest{
-		AssetName:   "datatest-students",
+		AssetName:   "kingbasedata",
 		ChainInfoId: 1,
 		PlatformId:  1,
 	}
