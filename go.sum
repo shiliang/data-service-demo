@@ -1,5 +1,5 @@
-chainweaver.org.cn/chainweaver/mira/mira-data-service-client v0.0.0-20241118084524-e5b8de3c1294 h1:/R14GKVXiSVe4uaMxWZrJQ+GbmsuraCPGXXQcYK8hX8=
-chainweaver.org.cn/chainweaver/mira/mira-data-service-client v0.0.0-20241118084524-e5b8de3c1294/go.mod h1:hg5kKLCMgoClkkV2Cl5xGNWavZ+rLPh+chJlMIq+fVE=
+chainweaver.org.cn/chainweaver/mira/mira-data-service-client v0.0.0-20241120061916-adaa646d477b h1:CD1+6enbEMDsdx80rvtPiJG+DSx8S8WCkZHuwilPIrs=
+chainweaver.org.cn/chainweaver/mira/mira-data-service-client v0.0.0-20241120061916-adaa646d477b/go.mod h1:dOw5z2nMYu2WR6obZ6LG8S1yJPMWDzjT7iKEtcoCqtQ=
 github.com/apache/arrow/go/v15 v15.0.2 h1:60IliRbiyTWCWjERBCkO1W4Qun9svcYoZrSLcyOsMLE=
 github.com/apache/arrow/go/v15 v15.0.2/go.mod h1:DGXsR3ajT524njufqf95822i+KTh+yea1jass9YXgjA=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
@@ -20,6 +20,8 @@ github.com/pierrec/lz4/v4 v4.1.21 h1:yOVMLb6qSIDP67pl/5F7RepeKYu/VmTyEXvuMI5d9mQ
 github.com/pierrec/lz4/v4 v4.1.21/go.mod h1:gZWDp/Ze/IJXGXf23ltt2EXimqmTUXEy0GFuRQyBid4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/shopspring/decimal v1.4.0 h1:bxl37RwXBklmTi0C79JfXCEBD1cqqHt0bbgBAGFp81k=
+github.com/shopspring/decimal v1.4.0/go.mod h1:gawqmDU56v4yIKSwfBSFip1HdCCXN8/+DMd9qYNcwME=
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/zeebo/assert v1.3.0 h1:g7C04CbJuIDKNPFHmsk4hwZDO5O+kntRxzaUoNXj+IQ=

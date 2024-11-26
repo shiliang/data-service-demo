@@ -10,10 +10,14 @@
 package main
 
 import (
+	"bytes"
 	client "chainweaver.org.cn/chainweaver/mira/mira-data-service-client"
 	pb "chainweaver.org.cn/chainweaver/mira/mira-data-service-client/proto/datasource"
 	"context"
 	"fmt"
+	"github.com/apache/arrow/go/v15/arrow/array"
+	"github.com/apache/arrow/go/v15/arrow/ipc"
+	"github.com/apache/arrow/go/v15/arrow/memory"
 	"io"
 	"log"
 )
@@ -37,9 +41,9 @@ func main() {
 		DynamicAllocationEnabled:      true,
 		DynamicAllocationMinExecutors: 2,
 		DynamicAllocationMaxExecutors: 10,
-		ExecutorMemoryMB:              5096,
+		ExecutorMemoryMB:              3072,
 		ExecutorCores:                 4,
-		DriverMemoryMB:                3048,
+		DriverMemoryMB:                3536,
 		DriverCores:                   2,
 	}
 
@@ -77,8 +81,39 @@ func main() {
 			log.Fatalf("failed to receive data from stream: %v", err)
 		}
 
-		// 处理接收到的 OSSReadResponse 数据
-		fmt.Printf("Received chunk: %s\n", response.Chunk)
+		arrowBatch := response.ArrowBatch
+		// 使用 Arrow IPC Reader 反序列化
+		reader, err := ipc.NewReader(bytes.NewReader(arrowBatch), ipc.WithAllocator(memory.DefaultAllocator))
+		if err != nil {
+			log.Fatalf("failed to create Arrow IPC Reader: %v", err)
+		}
+		defer reader.Release()
+
+		// 遍历每个批次的数据表
+		for reader.Next() {
+			record := reader.Record()
+			defer record.Release()
+
+			// 打印表结构
+			log.Printf("Schema: %s", record.Schema())
+
+			// 遍历行
+			for i := 0; i < int(record.NumRows()); i++ {
+				row := []interface{}{}
+				for j := 0; j < int(record.NumCols()); j++ {
+					column := record.Column(j)
+					switch col := column.(type) {
+					case *array.Int32:
+						row = append(row, col.Value(i))
+					case *array.String:
+						row = append(row, col.Value(i))
+					default:
+						row = append(row, "unknown type")
+					}
+				}
+				log.Printf("Row %d: %v", i, row)
+			}
+		}
 	}
 
 	fmt.Println("Data streaming completed successfully.")

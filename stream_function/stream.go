@@ -19,7 +19,9 @@ import (
 	"github.com/apache/arrow/go/v15/arrow/array"
 	"github.com/apache/arrow/go/v15/arrow/ipc"
 	"github.com/apache/arrow/go/v15/arrow/memory"
+	"github.com/shopspring/decimal"
 	"log"
+	"time"
 )
 
 // ExtractRowData 从 Arrow Record 中提取每一行的数据
@@ -49,7 +51,23 @@ func ExtractRowData(record arrow.Record) ([][]interface{}, error) {
 			case arrow.DECIMAL128:
 				decimal128Array := column.(*array.Decimal128)
 				decimalValue := decimal128Array.Value(int(rowIdx))
-				value = decimalValue.ToFloat64(decimal128Array.DataType().(*arrow.Decimal128Type).Scale) // 转换为 float64
+				scale := decimal128Array.DataType().(*arrow.Decimal128Type).Scale
+				bigInt := decimalValue.BigInt()
+
+				// 根据 scale 调整小数点
+				adjustment := decimal.New(1, int32(scale)) // 10^scale
+				dec := decimal.NewFromBigInt(bigInt, 0).Div(adjustment)
+
+				// 调试日志，查看中间值
+				log.Printf("Decimal128 value: bigInt=%s, scale=%d, adjusted=%s", bigInt.String(), scale, dec.String())
+
+				value = dec // 转换为 decimal.Decimal
+			case arrow.DATE32:
+				date32Array := column.(*array.Date32)
+				daysSinceEpoch := date32Array.Value(int(rowIdx))
+				timestamp := time.Unix(int64(daysSinceEpoch)*86400, 0).UTC()
+				formattedDate := timestamp.Format("2006-01-02") // 格式化为 YYYY-MM-DD
+				value = formattedDate
 			// 可以根据需要添加更多类型的支持
 			default:
 				return nil, fmt.Errorf("unsupported column type: %v", column.DataType().ID())
@@ -78,25 +96,28 @@ func main() {
 
 	// 创建排序规则
 	sortRules := []*pb.SortRule{
-		{FieldName: "score", SortOrder: pb.SortOrder_ASC},
+		{FieldName: "grade", SortOrder: pb.SortOrder_ASC},
 	}
 
 	// 创建StreamReadRequest实例
 	request := &pb.StreamReadRequest{
-		AssetName:       "datatest",
+		AssetName:       "243student",
 		ChainInfoId:     1,
-		DbFields:        []string{"tcol14"},
+		DbFields:        []string{"name", "enrollment_date", "grade"},
 		PlatformId:      1,
 		SortRules:       sortRules,
-		FilterNames:     []string{"tcol08"}, // 指定过滤条件
+		FilterNames:     []string{"name"}, // 指定过滤条件
 		FilterOperators: []pb.FilterOperator{pb.FilterOperator_IN_OPERATOR},
 		FilterValues: []*pb.FilterValue{
-			//{
-			//	StrValues: []string{"Alice"},
-			//},
 			{
+				StrValues: []string{"Alice"},
+			},
+			/*{
 				FloatValues: []float64{1.46},
 			},
+			{
+				FloatValues: []float64{5.450836},
+			},*/
 		},
 	}
 
@@ -145,8 +166,12 @@ func main() {
 				log.Fatalf("Error extracting row data: %v", err)
 			}
 
-			for _, row := range rows {
-				fmt.Printf("Row: %v\n", row)
+			for rowIndex, row := range rows {
+				fmt.Printf("Row %d: ", rowIndex+1)
+				for colIndex, value := range row {
+					fmt.Printf("%s=%v ", record.ColumnName(colIndex), value)
+				}
+				fmt.Println()
 			}
 		}
 	}
