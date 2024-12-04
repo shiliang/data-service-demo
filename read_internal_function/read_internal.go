@@ -76,10 +76,27 @@ func main() {
 		log.Fatalf("failed to initialize DataServiceClient: %v", err)
 	}
 
+	sortRules := []*pb.SortRule{
+		{FieldName: "id", SortOrder: pb.SortOrder_ASC},
+	}
 	request := &pb.InternalReadRequest{
-		TableName: "test_data",
-		DbFields:  []string{"id", "data"},
-		DbName:    "stream_task",
+		TableName:       "20241203_19ec35278a374f87b5bab308efd872bf",
+		DbFields:        []string{"id", "data"},
+		DbName:          "MIRA_ENGINE_TEMP",
+		SortRules:       sortRules,
+		FilterNames:     []string{"data"}, // 指定过滤条件
+		FilterOperators: []pb.FilterOperator{pb.FilterOperator_IN_OPERATOR},
+		FilterValues: []*pb.FilterValue{
+			{
+				StrValues: []string{"58950", "65960", "65980"},
+			},
+			/*{
+			    FloatValues: []float64{1.46},
+			  },
+			  {
+			    FloatValues: []float64{5.450836},
+			  },*/
+		},
 	}
 
 	stream, err := dataServiceClient.ReadInternalDBData(ctx, request)

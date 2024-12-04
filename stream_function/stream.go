@@ -68,6 +68,32 @@ func ExtractRowData(record arrow.Record) ([][]interface{}, error) {
 				timestamp := time.Unix(int64(daysSinceEpoch)*86400, 0).UTC()
 				formattedDate := timestamp.Format("2006-01-02") // 格式化为 YYYY-MM-DD
 				value = formattedDate
+			case arrow.TIMESTAMP:
+				timestampArray := column.(*array.Timestamp)
+				timestampValue := timestampArray.Value(int(rowIdx))
+				unit := timestampArray.DataType().(*arrow.TimestampType).Unit
+
+				// 根据时间戳的单位进行转换
+				switch unit {
+				case arrow.Second:
+					timestamp := time.Unix(int64(timestampValue), 0).UTC()
+					formattedTimestamp := timestamp.Format("2006-01-02 15:04:05")
+					value = formattedTimestamp
+				case arrow.Millisecond:
+					timestamp := time.Unix(0, int64(timestampValue*1e6)).UTC()
+					formattedTimestamp := timestamp.Format("2006-01-02 15:04:05.000")
+					value = formattedTimestamp
+				case arrow.Microsecond:
+					timestamp := time.Unix(0, int64(timestampValue*1e3)).UTC()
+					formattedTimestamp := timestamp.Format("2006-01-02 15:04:05.000000")
+					value = formattedTimestamp
+				case arrow.Nanosecond:
+					timestamp := time.Unix(0, int64(timestampValue)).UTC()
+					formattedTimestamp := timestamp.Format("2006-01-02 15:04:05.000000000")
+					value = formattedTimestamp
+				default:
+					return nil, fmt.Errorf("unsupported timestamp unit: %v", unit)
+				}
 			// 可以根据需要添加更多类型的支持
 			default:
 				return nil, fmt.Errorf("unsupported column type: %v", column.DataType().ID())
@@ -96,14 +122,14 @@ func main() {
 
 	// 创建排序规则
 	sortRules := []*pb.SortRule{
-		{FieldName: "grade", SortOrder: pb.SortOrder_ASC},
+		{FieldName: "gpa", SortOrder: pb.SortOrder_ASC},
 	}
 
 	// 创建StreamReadRequest实例
 	request := &pb.StreamReadRequest{
-		AssetName:       "243student",
+		AssetName:       "kingbasestudents",
 		ChainInfoId:     1,
-		DbFields:        []string{"name", "enrollment_date", "grade"},
+		DbFields:        []string{"name", "score", "enrollment_date", "gpa"},
 		PlatformId:      1,
 		SortRules:       sortRules,
 		FilterNames:     []string{"name"}, // 指定过滤条件

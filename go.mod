@@ -3,7 +3,7 @@ module test
 go 1.23.0
 
 require (
-	chainweaver.org.cn/chainweaver/mira/mira-data-service-client v0.0.0-20241120061916-adaa646d477b
+	chainweaver.org.cn/chainweaver/mira/mira-data-service-client v0.0.0-20241204062335-45825310268c
 	github.com/apache/arrow/go/v15 v15.0.2
 	github.com/shopspring/decimal v1.4.0
 )

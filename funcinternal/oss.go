@@ -55,6 +55,7 @@ func generateArrowFile(filePath string) error {
 }
 
 func validateArrowFile(filePath string) error {
+	// 打开文件
 	file, err := os.Open(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to open file: %v", err)
@@ -84,23 +85,60 @@ func validateArrowFile(filePath string) error {
 		return fmt.Errorf("failed to create Arrow IPC reader: %v", err)
 	}
 
+	// 打印 Schema 信息
 	fmt.Println("File is a valid Arrow IPC file.")
 	fmt.Println("Schema:", ipcReader.Schema()) // 打印 Schema 信息
 
-	// 读取所有记录批次
-	for i := 0; i < ipcReader.NumRecords(); i++ {
-		record, err := ipcReader.Record(i)
-		if err != nil {
-			return fmt.Errorf("failed to read record batch %d: %v", i, err)
+	// 读取所有记录批次并打印详细数据
+	recordBatchIndex := 0
+	for {
+		// 读取一个记录批次
+		recordBatch, err := ipcReader.Read()
+		if err == io.EOF {
+			// 所有数据已读取完毕
+			break
 		}
-		fmt.Printf("Record batch %d has %d rows and %d columns.\n", i, record.NumRows(), record.NumCols())
+		if err != nil {
+			return fmt.Errorf("failed to read record batch: %v", err)
+		}
+
+		// 打印记录批次的基本信息
+		fmt.Printf("Record batch %d has %d rows and %d columns.\n", recordBatchIndex, recordBatch.NumRows(), recordBatch.NumCols())
+
+		// 遍历每一列数据
+		for colIdx := int64(0); colIdx < int64(recordBatch.NumCols()); colIdx++ {
+			// 获取当前列数据
+			col := recordBatch.Column(int(colIdx))
+
+			// 打印列名称和列的每一行数据
+			fmt.Printf("Column %d: %s\n", colIdx, recordBatch.Schema().Field(int(colIdx)).Name)
+			for rowIdx := int64(0); rowIdx < int64(recordBatch.NumRows()); rowIdx++ {
+				// 打印每行数据
+				switch c := col.(type) {
+				case *array.Int32:
+					fmt.Printf("Row %d: %d\n", rowIdx, c.Value(int(rowIdx)))
+				case *array.String:
+					fmt.Printf("Row %d: %s\n", rowIdx, c.Value(int(rowIdx)))
+				case *array.Float64:
+					fmt.Printf("Row %d: %f\n", rowIdx, c.Value(int(rowIdx)))
+				case *array.Int64:
+					fmt.Printf("Row %d: %d\n", rowIdx, c.Value(int(rowIdx)))
+				default:
+					fmt.Printf("Row %d: Unknown column type\n", rowIdx)
+				}
+			}
+		}
+
+		// 增加记录批次索引
+		recordBatchIndex++
 	}
 
+	fmt.Println("Arrow file validation completed successfully.")
 	return nil
 }
 
 func main() {
-	filePath := "C:\\software\\go\\src\\test\\funcinternal\\file.arrow"
+	filePath := "C:\\software\\go\\src\\test\\funcinternal\\data_service_arrow_1733195536260078700.arrow"
 	/*if err := generateArrowFile(filePath); err != nil {
 		log.Fatalf("Failed to generate Arrow file: %v", err)
 	}*/
