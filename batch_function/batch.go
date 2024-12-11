@@ -10,17 +10,13 @@
 package main
 
 import (
-	"bytes"
 	client "chainweaver.org.cn/chainweaver/mira/mira-data-service-client"
 	pb "chainweaver.org.cn/chainweaver/mira/mira-data-service-client/proto/datasource"
 	"context"
 	"fmt"
 	"github.com/apache/arrow/go/v15/arrow"
 	"github.com/apache/arrow/go/v15/arrow/array"
-	"github.com/apache/arrow/go/v15/arrow/ipc"
-	"github.com/apache/arrow/go/v15/arrow/memory"
 	"github.com/shopspring/decimal"
-	"io"
 	"log"
 	"time"
 )
@@ -28,12 +24,16 @@ import (
 func main() {
 	ctx := context.Background()
 
+	// 记录开始时间
+	startTime := time.Now()
+
 	// 创建一个ServerInfo实例
 	serverInfo := &pb.ServerInfo{
 		//Namespace:   "mira1", // 如果在Kubernetes集群中使用，可以指定命名空间
 		ServiceName: "192.168.40.243",
 		ServicePort: "30015",
 	}
+
 	dataServiceClient, err := client.NewDataServiceClient(ctx, serverInfo)
 	if err != nil {
 		log.Fatalf("failed to initialize DataServiceClient: %v", err)
@@ -49,6 +49,7 @@ func main() {
 		DriverMemoryMB:                3536,
 		DriverCores:                   2,
 		Parallelism:                   200,
+		NumPartitions:                 50,
 	}
 
 	/*request := &pb.BatchReadRequest{
@@ -68,56 +69,20 @@ func main() {
 	}
 
 	// 调用 ReadBatchData 方法获取流式数据
-	stream, err := dataServiceClient.ReadBatchData(ctx, request)
+	response, err := dataServiceClient.ReadBatchData(ctx, request)
 	if err != nil {
 		log.Fatalf("failed to call ReadBatchData: %v", err)
 	}
 
-	// 遍历流式响应数据
-	for {
-		// 从流中接收 OSSReadResponse
-		response, err := stream.Recv()
-		if err == io.EOF {
-			// 所有数据已接收完毕
-			break
-		}
-		if err != nil {
-			log.Fatalf("failed to receive data from stream: %v", err)
-		}
+	log.Printf("batch response : %s", response)
 
-		arrowBatch := response.ArrowBatch
-		// 使用 Arrow IPC Reader 反序列化
-		reader, err := ipc.NewReader(bytes.NewReader(arrowBatch), ipc.WithAllocator(memory.DefaultAllocator))
-		if err != nil {
-			log.Fatalf("failed to create Arrow IPC Reader: %v", err)
-		}
-		defer reader.Release()
+	// 记录结束时间
+	endTime := time.Now()
 
-		// 遍历每个批次的数据表
-		for reader.Next() {
-			record := reader.Record()
-			defer record.Release()
+	// 计算总时间
+	totalTime := endTime.Sub(startTime)
+	log.Printf("Total execution time: %v", totalTime)
 
-			// 打印表结构
-			log.Printf("Schema: %s", record.Schema())
-
-			// 提取并打印每一行的数据
-			rows, err := ExtractRowData(record)
-			if err != nil {
-				log.Fatalf("Error extracting row data: %v", err)
-			}
-
-			for rowIndex, row := range rows {
-				fmt.Printf("Row %d: ", rowIndex+1)
-				for colIndex, value := range row {
-					fmt.Printf("%s=%v ", record.ColumnName(colIndex), value)
-				}
-				fmt.Println()
-			}
-		}
-	}
-
-	fmt.Println("Data streaming completed successfully.")
 }
 
 func ExtractRowData(record arrow.Record) ([][]interface{}, error) {

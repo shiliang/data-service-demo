@@ -68,6 +68,9 @@ func validateArrowFile(filePath string) error {
 		return fmt.Errorf("failed to read file contents: %v", err)
 	}
 
+	magicBytes := content[:5]
+	fmt.Printf("Magic Bytes: %s\n", string(magicBytes))
+
 	// 打印文件内容的原始字节数和内容
 	fmt.Printf("File size: %d bytes\n", len(content))
 	fmt.Printf("Raw file content (first 256 bytes): %v\n", content[:256]) // 打印前256字节
@@ -84,10 +87,6 @@ func validateArrowFile(filePath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create Arrow IPC reader: %v", err)
 	}
-
-	// 打印 Schema 信息
-	fmt.Println("File is a valid Arrow IPC file.")
-	fmt.Println("Schema:", ipcReader.Schema()) // 打印 Schema 信息
 
 	// 读取所有记录批次并打印详细数据
 	recordBatchIndex := 0
@@ -138,7 +137,7 @@ func validateArrowFile(filePath string) error {
 }
 
 func main() {
-	filePath := "C:\\software\\go\\src\\test\\funcinternal\\data_service_arrow_1733195536260078700.arrow"
+	filePath := "C:\\software\\go\\src\\test\\funcinternal\\data_service_arrow_1733826681514840600.arrow"
 	/*if err := generateArrowFile(filePath); err != nil {
 		log.Fatalf("Failed to generate Arrow file: %v", err)
 	}*/
