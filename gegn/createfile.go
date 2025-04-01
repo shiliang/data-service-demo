@@ -32,7 +32,10 @@ func generateArrowFile(filePath string) error {
 	ageBuilder := builder.Field(2).(*array.Int32Builder)
 
 	// 动态添加数据
-	names := []string{"Alice", "Bob", "Charlie", "David", "Eva"}
+	// 动态添加更多的数据
+	names := []string{"Alice", "Bob", "Charlie", "David", "Eva", "Frank", "Grace", "Hannah", "Isaac", "Jack",
+		"Karen", "Liam", "Mona", "Nina", "Oliver", "Paul", "Quinn", "Rita", "Sam", "Tina"}
+
 	for i, name := range names {
 		idBuilder.Append(int32(i + 1))
 		nameBuilder.Append(name)

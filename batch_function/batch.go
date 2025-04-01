@@ -61,11 +61,10 @@ func main() {
 	}*/
 
 	request := &pb.BatchReadRequest{
-		AssetName:   "datatest",
-		ChainInfoId: 1,
-		DbFields:    []string{"tcol01", "id"},
-		PlatformId:  1,
+		DbFields:    []string{"name", "age"},
 		SparkConfig: sparkConfig,
+		BucketName:  "data-service",
+		DataObject:  "sample.arrow",
 	}
 
 	// 调用 ReadBatchData 方法获取流式数据

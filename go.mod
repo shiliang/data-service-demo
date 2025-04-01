@@ -3,8 +3,9 @@ module test
 go 1.23.0
 
 require (
-	chainweaver.org.cn/chainweaver/mira/mira-data-service-client v0.0.0-20241217093317-150b28a8f3a8
+	chainweaver.org.cn/chainweaver/mira/mira-data-service-client v0.0.0-20250331022634-59b56bd1ade2
 	github.com/apache/arrow/go/v15 v15.0.2
+	github.com/minio/minio-go/v7 v7.0.81
 	github.com/shopspring/decimal v1.4.0
 )
 
@@ -17,7 +18,6 @@ require (
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
-	github.com/minio/minio-go/v7 v7.0.81 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
