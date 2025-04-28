@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/apache/arrow/go/v15/arrow"
-	"github.com/apache/arrow/go/v15/arrow/array"
-	"github.com/apache/arrow/go/v15/arrow/ipc"
-	"github.com/apache/arrow/go/v15/arrow/memory"
 	"io"
 	"log"
 	"os"
 	"test/utils"
+
+	"github.com/apache/arrow/go/v15/arrow"
+	"github.com/apache/arrow/go/v15/arrow/array"
+	"github.com/apache/arrow/go/v15/arrow/ipc"
+	"github.com/apache/arrow/go/v15/arrow/memory"
 )
 
 func generateArrowFile(filePath string) error {
@@ -138,30 +139,22 @@ func validateArrowFile(filePath string) error {
 }
 
 func main() {
-	//// 往minio object里写入数据
-	//ctx := context.Background()
-	//
-	//// 创建一个ServerInfo实例
-	//serverInfo := &pb.ServerInfo{
-	//	//Namespace:   "mira1", // 如果在Kubernetes集群中使用，可以指定命名空间
-	//	ServiceName: "192.168.40.243",
-	//	ServicePort: "30015",
-	//}
-	//dataServiceClient, err := client.NewDataServiceClient(ctx, serverInfo)
-	//if err != nil {
-	//	log.Fatalf("failed to initialize DataServiceClient: %v", err)
-	//}
-	////// 写入oss
-	//bucketName := "data-service"
-	//objectName := "bytedata.arrow"
-	////data1 := []byte("some data")
-	//response, err := dataServiceClient.WriteOSSData(ctx, bucketName, objectName, "", data1)
-	////if err != nil {
-	////	log.Fatalf("Failed to write OSS data: %v", err)
-	////}
-	////log.Printf("Response: %v", response)
+	filePath := "sample1.arrow"
+
+	// 首先生成文件
+	err := generateArrowFile(filePath)
+	if err != nil {
+		log.Fatalf("Failed to generate Arrow file: %v", err)
+	}
+
+	// 验证文件
+	err = validateArrowFile(filePath)
+	if err != nil {
+		log.Fatalf("Failed to validate Arrow file: %v", err)
+	}
+
 	// 打开文件
-	file, err := os.Open(".\\sample.arrow")
+	file, err := os.Open(filePath)
 	if err != nil {
 		log.Fatalf("Failed to open file: %v", err)
 	}
@@ -171,19 +164,27 @@ func main() {
 	allocator := memory.NewGoAllocator()
 
 	// 创建 Arrow Reader
-	reader, err := ipc.NewReader(file, ipc.WithAllocator(allocator))
+	reader, err := ipc.NewFileReader(file, ipc.WithAllocator(allocator))
 	if err != nil {
 		log.Fatalf("Failed to create Arrow reader: %v", err)
 	}
-	defer reader.Release()
+
+	fmt.Println("开始读取文件...")
 
 	// 读取每一条记录
-	for reader.Next() {
-		record := reader.Record()
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Failed to read record: %v", err)
+		}
 		defer record.Release()
 
 		// 打印 Record 的 schema 信息
 		fmt.Println("Record schema:", record.Schema())
+		fmt.Printf("Record has %d rows and %d columns\n", record.NumRows(), record.NumCols())
 
 		// 提取并打印每一行的数据
 		rows, err := utils.ExtractRowData(record)
@@ -191,6 +192,7 @@ func main() {
 			log.Fatalf("Error extracting row data: %v", err)
 		}
 
+		fmt.Println("提取到的数据：")
 		for rowIndex, row := range rows {
 			fmt.Printf("Row %d: ", rowIndex+1)
 			for colIndex, value := range row {
