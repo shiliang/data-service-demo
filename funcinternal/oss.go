@@ -1,6 +1,9 @@
 package main
 
 import (
+	client "chainweaver.org.cn/chainweaver/mira/mira-data-service-client"
+	pb "chainweaver.org.cn/chainweaver/mira/mira-data-service-client/proto/datasource"
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -139,18 +142,18 @@ func validateArrowFile(filePath string) error {
 }
 
 func main() {
-	filePath := "sample1.arrow"
+	filePath := "D:\\code\\demo\\data-service-demo\\funcinternal\\sample1.arrow"
+	ctx := context.Background()
 
-	// 首先生成文件
-	err := generateArrowFile(filePath)
-	if err != nil {
-		log.Fatalf("Failed to generate Arrow file: %v", err)
+	// 创建一个ServerInfo实例
+	serverInfo := &pb.ServerInfo{
+		//Namespace:   "mira1", // 如果在Kubernetes集群中使用，可以指定命名空间
+		ServiceName: "192.168.40.243",
+		ServicePort: "30015",
 	}
-
-	// 验证文件
-	err = validateArrowFile(filePath)
+	dataServiceClient, err := client.NewDataServiceClient(ctx, serverInfo)
 	if err != nil {
-		log.Fatalf("Failed to validate Arrow file: %v", err)
+		log.Fatalf("failed to initialize DataServiceClient: %v", err)
 	}
 
 	// 打开文件
