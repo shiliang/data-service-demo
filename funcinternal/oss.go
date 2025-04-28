@@ -1,14 +1,15 @@
 package main
 
 import (
-	client "chainweaver.org.cn/chainweaver/mira/mira-data-service-client"
-	pb "chainweaver.org.cn/chainweaver/mira/mira-data-service-client/proto/datasource"
 	"context"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"test/utils"
+
+	client "chainweaver.org.cn/chainweaver/mira/mira-data-service-client"
+	pb "chainweaver.org.cn/chainweaver/mira/mira-data-service-client/proto/datasource"
 
 	"github.com/apache/arrow/go/v15/arrow"
 	"github.com/apache/arrow/go/v15/arrow/array"
@@ -155,6 +156,21 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to initialize DataServiceClient: %v", err)
 	}
+
+	// 读取文件内容
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		log.Fatalf("Failed to read file: %v", err)
+	}
+
+	// 写入OSS
+	bucketName := "data-service"
+	objectName := "bytedata.arrow"
+	response, err := dataServiceClient.WriteOSSData(ctx, bucketName, objectName, "", data)
+	if err != nil {
+		log.Fatalf("Failed to write OSS data: %v", err)
+	}
+	fmt.Printf("Response: %v\n", response)
 
 	// 打开文件
 	file, err := os.Open(filePath)
