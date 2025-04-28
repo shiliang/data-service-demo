@@ -163,10 +163,12 @@ func main() {
 		log.Fatalf("Failed to read file: %v", err)
 	}
 
+	fmt.Printf("File size: %d bytes\n", len(data))
+	fmt.Printf("First 16 bytes: %v\n", data[:16])
 	// 写入OSS
 	bucketName := "data-service"
 	objectName := "bytedata.arrow"
-	response, err := dataServiceClient.WriteOSSData(ctx, bucketName, objectName, "", data)
+	response, err := dataServiceClient.WriteOSSData(ctx, bucketName, objectName, data)
 	if err != nil {
 		log.Fatalf("Failed to write OSS data: %v", err)
 	}
