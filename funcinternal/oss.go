@@ -143,7 +143,7 @@ func validateArrowFile(filePath string) error {
 }
 
 func main() {
-	filePath := "D:\\code\\demo\\data-service-demo\\funcinternal\\sample1.arrow"
+	filePath := "D:\\code\\demo\\data-service-demo\\funcinternal\\bytedata.arrow"
 	ctx := context.Background()
 
 	// 创建一个ServerInfo实例
@@ -168,7 +168,7 @@ func main() {
 	// 写入OSS
 	bucketName := "data-service"
 	objectName := "bytedata.arrow"
-	response, err := dataServiceClient.WriteOSSData(ctx, bucketName, objectName, data)
+	response, err := dataServiceClient.WriteOSSData(ctx, bucketName, objectName, client.ArrowStreamFormat, data)
 	if err != nil {
 		log.Fatalf("Failed to write OSS data: %v", err)
 	}
