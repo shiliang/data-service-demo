@@ -69,7 +69,11 @@ func main() {
 		TableName:  "defrgt",
 	}
 
-	response := dataServiceClient.WriteInternalDBData(ctx, request)
+	requestArray := []*pb.WriterInternalDataRequest{
+		request,
+	}
+
+	response := dataServiceClient.WriteInternalDBData(ctx, requestArray)
 	fmt.Println(response)
 }
 

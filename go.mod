@@ -3,13 +3,14 @@ module test
 go 1.23.0
 
 require (
-	chainweaver.org.cn/chainweaver/mira/mira-data-service-client v0.0.0-20250331022634-59b56bd1ade2
+	chainweaver.org.cn/chainweaver/mira/mira-data-service-client v0.0.0-20250428024135-04a03a4acef2
 	github.com/apache/arrow/go/v15 v15.0.2
 	github.com/minio/minio-go/v7 v7.0.81
 	github.com/shopspring/decimal v1.4.0
 )
 
 require (
+	github.com/apache/arrow/go/v14 v14.0.2 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect

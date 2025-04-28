@@ -1,18 +1,15 @@
 package main
 
 import (
-	"bytes"
-	"context"
 	"fmt"
 	"github.com/apache/arrow/go/v15/arrow"
 	"github.com/apache/arrow/go/v15/arrow/array"
 	"github.com/apache/arrow/go/v15/arrow/ipc"
 	"github.com/apache/arrow/go/v15/arrow/memory"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 	"io"
 	"log"
 	"os"
+	"test/utils"
 )
 
 func generateArrowFile(filePath string) error {
@@ -141,109 +138,65 @@ func validateArrowFile(filePath string) error {
 }
 
 func main() {
-	//filePath := "C:\\software\\go\\src\\test\\funcinternal\\102995875df440ffa1e19a43f1401ef5.arrow"
-	///*if err := generateArrowFile(filePath); err != nil {
-	//	log.Fatalf("Failed to generate Arrow file: %v", err)
-	//}*/
+	//// 往minio object里写入数据
+	//ctx := context.Background()
 	//
-	//if err := validateArrowFile(filePath); err != nil {
-	//	log.Fatalf("Failed to validate Arrow IPC file: %v", err)
+	//// 创建一个ServerInfo实例
+	//serverInfo := &pb.ServerInfo{
+	//	//Namespace:   "mira1", // 如果在Kubernetes集群中使用，可以指定命名空间
+	//	ServiceName: "192.168.40.243",
+	//	ServicePort: "30015",
 	//}
-	//
-	//fmt.Println("All record batches processed successfully.")
-
-	//从minio上读取arrow文件
-	client, err := minio.New("192.168.40.243:31000", &minio.Options{
-		Creds:  credentials.NewStaticV4("minio", "minio123", ""),
-		Secure: false,
-	})
-	if err != nil {
-		fmt.Println("Error creating Minio client:", err)
-	}
-
-	object, err := client.GetObject(context.Background(), "data-service", "data/ab58867b-dcd8-47bd-ab96-36324abf0ba6_partition_102995875df440ffa1e19a43f1401ef5.arrow", minio.GetObjectOptions{})
-	if err != nil {
-		fmt.Println("Error getting object:", err)
-	}
-	defer object.Close()
-
-	// 将对象内容读取到缓冲区
-	var buf bytes.Buffer
-	_, err = io.Copy(&buf, object)
-	if err != nil {
-		log.Fatalf("Error copying object data: %v", err)
-	}
-
-	// 使用缓冲区创建读取器
-	reader := bytes.NewReader(buf.Bytes())
-	// 创建内存分配器
-	pool := memory.NewGoAllocator()
-
-	//// 调试信息：检查 reader 的长度和当前偏移量
-	//fmt.Printf("Buffer length: %d\n", reader.Len())
-	//fmt.Printf("Current offset: %d\n", reader.Size()-int64(reader.Len()))
-	//
-	//// 示例：读取前 10 个字节进行调试
-	//first10Bytes := make([]byte, 10)
-	//n, err := reader.Read(first10Bytes)
-	//if err != nil && err != io.EOF {
-	//	log.Fatalf("Error reading first 10 bytes: %v", err)
+	//dataServiceClient, err := client.NewDataServiceClient(ctx, serverInfo)
+	//if err != nil {
+	//	log.Fatalf("failed to initialize DataServiceClient: %v", err)
 	//}
-	//fmt.Printf("First 10 bytes: %q\n", first10Bytes[:n])
-	//
-	//// 重置 reader 的指针到开头
-	//reader.Seek(0, io.SeekStart)
-
-	// 使用 ipc.NewReader 读取 Arrow 数据
-	ipcReader, err := ipc.NewFileReader(reader, ipc.WithAllocator(pool))
+	////// 写入oss
+	//bucketName := "data-service"
+	//objectName := "bytedata.arrow"
+	////data1 := []byte("some data")
+	//response, err := dataServiceClient.WriteOSSData(ctx, bucketName, objectName, "", data1)
+	////if err != nil {
+	////	log.Fatalf("Failed to write OSS data: %v", err)
+	////}
+	////log.Printf("Response: %v", response)
+	// 打开文件
+	file, err := os.Open(".\\sample.arrow")
 	if err != nil {
-		log.Fatalf("Error creating Arrow IPC reader: %v", err)
+		log.Fatalf("Failed to open file: %v", err)
 	}
-	defer ipcReader.Close()
+	defer file.Close()
 
-	// 读取所有记录批次并打印详细数据
-	recordBatchIndex := 0
-	for {
-		// 读取一个记录批次
-		recordBatch, err := ipcReader.Read()
-		if err == io.EOF {
-			// 所有数据已读取完毕
-			break
-		}
+	// 创建 Arrow 内存分配器
+	allocator := memory.NewGoAllocator()
+
+	// 创建 Arrow Reader
+	reader, err := ipc.NewReader(file, ipc.WithAllocator(allocator))
+	if err != nil {
+		log.Fatalf("Failed to create Arrow reader: %v", err)
+	}
+	defer reader.Release()
+
+	// 读取每一条记录
+	for reader.Next() {
+		record := reader.Record()
+		defer record.Release()
+
+		// 打印 Record 的 schema 信息
+		fmt.Println("Record schema:", record.Schema())
+
+		// 提取并打印每一行的数据
+		rows, err := utils.ExtractRowData(record)
 		if err != nil {
-			log.Fatalf("Failed to read record batch: %v", err)
+			log.Fatalf("Error extracting row data: %v", err)
 		}
 
-		// 打印记录批次的基本信息
-		fmt.Printf("Record batch %d has %d rows and %d columns.\n", recordBatchIndex, recordBatch.NumRows(), recordBatch.NumCols())
-
-		// 遍历每一列数据
-		for colIdx := int64(0); colIdx < int64(recordBatch.NumCols()); colIdx++ {
-			// 获取当前列数据
-			col := recordBatch.Column(int(colIdx))
-
-			// 打印列名称和列的每一行数据
-			fmt.Printf("Column %d: %s\n", colIdx, recordBatch.Schema().Field(int(colIdx)).Name)
-			for rowIdx := int64(0); rowIdx < int64(recordBatch.NumRows()); rowIdx++ {
-				// 打印每行数据
-				switch c := col.(type) {
-				case *array.Int32:
-					fmt.Printf("Row %d: %d\n", rowIdx, c.Value(int(rowIdx)))
-				case *array.String:
-					fmt.Printf("Row %d: %s\n", rowIdx, c.Value(int(rowIdx)))
-				case *array.Float64:
-					fmt.Printf("Row %d: %f\n", rowIdx, c.Value(int(rowIdx)))
-				case *array.Int64:
-					fmt.Printf("Row %d: %d\n", rowIdx, c.Value(int(rowIdx)))
-				default:
-					fmt.Printf("Row %d: Unknown column type\n", rowIdx)
-				}
+		for rowIndex, row := range rows {
+			fmt.Printf("Row %d: ", rowIndex+1)
+			for colIndex, value := range row {
+				fmt.Printf("%s=%v ", record.ColumnName(colIndex), value)
 			}
+			fmt.Println()
 		}
-
-		// 增加记录批次索引
-		recordBatchIndex++
 	}
-
-	fmt.Println("Arrow file validation completed successfully.")
 }
