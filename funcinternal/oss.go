@@ -171,7 +171,7 @@ func main() {
 	// }
 	// fmt.Printf("Response: %v\n", response)
 
-	streamFilePath := "D:\\code\\demo\\data-service-demo\\funcinternal\\bytedata.stream"
+	streamFilePath := "D:\\code\\demo\\data-service-demo\\funcinternal\\bytedata.arrow"
 
 	// 读取文件内容
 	data, err := os.ReadFile(streamFilePath)
