@@ -1,15 +1,12 @@
 package main
 
 import (
-	"context"
+	"bytes"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"test/utils"
-
-	client "chainweaver.org.cn/chainweaver/mira/mira-data-service-client"
-	pb "chainweaver.org.cn/chainweaver/mira/mira-data-service-client/proto/datasource"
 
 	"github.com/apache/arrow/go/v15/arrow"
 	"github.com/apache/arrow/go/v15/arrow/array"
@@ -143,49 +140,53 @@ func validateArrowFile(filePath string) error {
 }
 
 func main() {
-	filePath := "D:\\code\\demo\\data-service-demo\\funcinternal\\bytedata.arrow"
-	ctx := context.Background()
+	// filePath := "D:\\code\\demo\\data-service-demo\\funcinternal\\bytedata.arrow"
+	// ctx := context.Background()
 
-	// 创建一个ServerInfo实例
-	serverInfo := &pb.ServerInfo{
-		//Namespace:   "mira1", // 如果在Kubernetes集群中使用，可以指定命名空间
-		ServiceName: "192.168.40.243",
-		ServicePort: "30015",
-	}
-	dataServiceClient, err := client.NewDataServiceClient(ctx, serverInfo)
-	if err != nil {
-		log.Fatalf("failed to initialize DataServiceClient: %v", err)
-	}
+	// // 创建一个ServerInfo实例
+	// serverInfo := &pb.ServerInfo{
+	//  //Namespace:   "mira1", // 如果在Kubernetes集群中使用，可以指定命名空间
+	//  ServiceName: "192.168.40.243",
+	//  ServicePort: "30015",
+	// }
+	// dataServiceClient, err := client.NewDataServiceClient(ctx, serverInfo)
+	// if err != nil {
+	//  log.Fatalf("failed to initialize DataServiceClient: %v", err)
+	// }
+
+	// // 读取文件内容
+	// data, err := os.ReadFile(filePath)
+	// if err != nil {
+	//  log.Fatalf("Failed to read file: %v", err)
+	// }
+
+	// fmt.Printf("File size: %d bytes\n", len(data))
+	// fmt.Printf("First 16 bytes: %v\n", data[:16])
+	// // 写入OSS
+	// bucketName := "data-service"
+	// objectName := "bytedata.arrow"
+	// response, err := dataServiceClient.WriteOSSData(ctx, bucketName, objectName, client.ArrowStreamFormat, data)
+	// if err != nil {
+	//  log.Fatalf("Failed to write OSS data: %v", err)
+	// }
+	// fmt.Printf("Response: %v\n", response)
+
+	streamFilePath := "D:\\code\\demo\\data-service-demo\\funcinternal\\bytedata.stream"
 
 	// 读取文件内容
-	data, err := os.ReadFile(filePath)
+	data, err := os.ReadFile(streamFilePath)
 	if err != nil {
 		log.Fatalf("Failed to read file: %v", err)
 	}
 
-	fmt.Printf("File size: %d bytes\n", len(data))
-	fmt.Printf("First 16 bytes: %v\n", data[:16])
-	// 写入OSS
-	bucketName := "data-service"
-	objectName := "bytedata.arrow"
-	response, err := dataServiceClient.WriteOSSData(ctx, bucketName, objectName, client.ArrowStreamFormat, data)
-	if err != nil {
-		log.Fatalf("Failed to write OSS data: %v", err)
-	}
-	fmt.Printf("Response: %v\n", response)
-
-	// 打开文件
-	file, err := os.Open(filePath)
-	if err != nil {
-		log.Fatalf("Failed to open file: %v", err)
-	}
-	defer file.Close()
-
 	// 创建 Arrow 内存分配器
 	allocator := memory.NewGoAllocator()
 
+	// 创建 io.Reader
+	reader := bytes.NewReader(data)
+
 	// 创建 Arrow Reader
-	reader, err := ipc.NewFileReader(file, ipc.WithAllocator(allocator))
+	ipcReader, err := ipc.NewReader(reader, ipc.WithAllocator(allocator))
 	if err != nil {
 		log.Fatalf("Failed to create Arrow reader: %v", err)
 	}
@@ -194,7 +195,7 @@ func main() {
 
 	// 读取每一条记录
 	for {
-		record, err := reader.Read()
+		record, err := ipcReader.Read()
 		if err == io.EOF {
 			break
 		}
