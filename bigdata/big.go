@@ -37,32 +37,15 @@ func main() {
 		log.Fatalf("Failed to read stream: %v", err)
 	}
 
-	// 收集所有数据
-	var allData []byte
-	for {
-		response, err := stream.Recv()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			log.Fatalf("Error receiving data: %v", err)
-		}
+	bucketName := "data-service"
+	objectName := "bigdatatest123456.arrow"
 
-		// 获取 arrow_batch 数据
-		arrowBatch := response.GetArrowBatch()
-		if len(arrowBatch) == 0 {
-			log.Println("Received empty arrow batch.")
-			continue
-		}
-
-		// 将数据追加到总数据中
-		allData = append(allData, arrowBatch...)
-		log.Printf("Received chunk: %v bytes", len(arrowBatch))
+	// 调用 ReadStream 方法
+	stream, err := dataServiceClient.ReadStream(ctx, request)
+	if err != nil {
+		log.Fatalf("Failed to read stream: %v", err)
 	}
 
-	log.Printf("Total data received: %v bytes", len(allData))
-
-	// 写入OSS
 	bucketName := "data-service"
 	objectName := "bigdatatest123456.arrow"
 
@@ -72,18 +55,35 @@ func main() {
 		log.Fatalf("Failed to create OSS write stream: %v", err)
 	}
 
-	// 发送数据
-	if err := ossStream.Send(&pb.OSSWriteRequest{
-		Chunk: allData,
-	}); err != nil {
-		log.Fatalf("Failed to send data: %v", err)
+	for {
+		response, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				// 读取流结束，关闭OSS写入流
+				finalResponse, err := ossStream.CloseAndRecv()
+				if err != nil {
+					log.Fatalf("Failed to close OSS stream: %v", err)
+				}
+				log.Printf("Final OSS write response: %v", finalResponse)
+				break
+			}
+			log.Fatalf("Error receiving data: %v", err)
+		}
+
+		// 解码 arrow_batch 数据
+		arrowBatch := response.GetArrowBatch() // 获取 arrow_batch 字段
+		if len(arrowBatch) == 0 {
+			log.Println("Received empty arrow batch.")
+			continue
+		}
+
+		// 直接使用流发送数据
+		chunkRequest := &pb.OSSWriteRequest{
+			Chunk: arrowBatch,
+		}
+		if err := ossStream.Send(chunkRequest); err != nil {
+			log.Fatalf("Failed to send data chunk: %v", err)
+		}
 	}
 
-	// 关闭流并获取响应
-	writeResponse, err := ossStream.CloseAndRecv()
-	if err != nil {
-		log.Fatalf("Failed to close stream: %v", err)
-	}
-
-	log.Printf("Write response: %v", writeResponse)
 }
