@@ -40,15 +40,6 @@ func main() {
 	bucketName := "data-service"
 	objectName := "bigdatatest123456.arrow"
 
-	// 调用 ReadStream 方法
-	stream, err := dataServiceClient.ReadStream(ctx, request)
-	if err != nil {
-		log.Fatalf("Failed to read stream: %v", err)
-	}
-
-	bucketName := "data-service"
-	objectName := "bigdatatest123456.arrow"
-
 	// 创建OSS写入流
 	ossStream, err := dataServiceClient.WriteOSSData(ctx, bucketName, objectName, client.ArrowStreamFormat)
 	if err != nil {
@@ -84,6 +75,7 @@ func main() {
 		if err := ossStream.Send(chunkRequest); err != nil {
 			log.Fatalf("Failed to send data chunk: %v", err)
 		}
+		log.Printf("Sent chunk: %v", len(chunkRequest.Chunk))
 	}
 
 }
