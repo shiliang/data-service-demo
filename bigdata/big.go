@@ -1,11 +1,12 @@
 package main
 
 import (
-	client "chainweaver.org.cn/chainweaver/mira/mira-data-service-client"
-	pb "chainweaver.org.cn/chainweaver/mira/mira-data-service-client/proto/datasource"
 	"context"
 	"io"
 	"log"
+
+	client "chainweaver.org.cn/chainweaver/mira/mira-data-service-client"
+	pb "chainweaver.org.cn/chainweaver/mira/mira-data-service-client/proto/datasource"
 )
 
 func main() {
@@ -39,8 +40,17 @@ func main() {
 	bucketName := "data-service"
 	objectName := "bigdatatest123456.arrow"
 
+	// 调用 ReadStream 方法
+	stream, err := dataServiceClient.ReadStream(ctx, request)
+	if err != nil {
+		log.Fatalf("Failed to read stream: %v", err)
+	}
+
+	bucketName := "data-service"
+	objectName := "bigdatatest123456.arrow"
+
 	// 创建OSS写入流
-	ossStream, err := dataServiceClient.WriteOSSData(ctx, bucketName, objectName, client.ArrowStreamFormat, nil)
+	ossStream, err := dataServiceClient.WriteOSSData(ctx, bucketName, objectName, client.ArrowStreamFormat)
 	if err != nil {
 		log.Fatalf("Failed to create OSS write stream: %v", err)
 	}
@@ -67,13 +77,13 @@ func main() {
 			continue
 		}
 
-		// 复用OSS写入流
-		writeResponse, err := dataServiceClient.WriteOSSData(ctx, bucketName, objectName, client.ArrowStreamFormat, arrowBatch, ossStream)
-		if err != nil {
-			log.Fatalf("failed to write arrow batch: %v", err)
+		// 直接使用流发送数据
+		chunkRequest := &pb.OSSWriteRequest{
+			Chunk: arrowBatch,
 		}
-
-		log.Println(writeResponse)
+		if err := ossStream.Send(chunkRequest); err != nil {
+			log.Fatalf("Failed to send data chunk: %v", err)
+		}
 	}
 
 }
