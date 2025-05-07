@@ -4,13 +4,20 @@ import (
 	"context"
 	"io"
 	"log"
+	"time"
 
 	client "chainweaver.org.cn/chainweaver/mira/mira-data-service-client"
 	pb "chainweaver.org.cn/chainweaver/mira/mira-data-service-client/proto/datasource"
 )
 
 func main() {
-	ctx := context.Background()
+	// 创建读取流的上下文，设置更长的超时时间
+	readCtx, readCancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer readCancel()
+
+	// 创建写入流的上下文，设置更长的超时时间
+	writeCtx, writeCancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer writeCancel()
 
 	// 创建一个ServerInfo实例
 	serverInfo := &pb.ServerInfo{
@@ -19,7 +26,7 @@ func main() {
 		ServicePort: "30015",
 	}
 
-	dataServiceClient, err := client.NewDataServiceClient(ctx, serverInfo)
+	dataServiceClient, err := client.NewDataServiceClient(readCtx, serverInfo)
 	if err != nil {
 		log.Fatalf("failed to initialize DataServiceClient: %v", err)
 	}
@@ -32,7 +39,7 @@ func main() {
 	}
 
 	// 调用 ReadStream 方法
-	stream, err := dataServiceClient.ReadStream(ctx, request)
+	stream, err := dataServiceClient.ReadStream(readCtx, request)
 	if err != nil {
 		log.Fatalf("Failed to read stream: %v", err)
 	}
@@ -41,41 +48,52 @@ func main() {
 	objectName := "bigdatatest123456.arrow"
 
 	// 创建OSS写入流
-	ossStream, err := dataServiceClient.WriteOSSData(ctx, bucketName, objectName, client.ArrowStreamFormat)
+	ossStream, err := dataServiceClient.WriteOSSData(writeCtx, bucketName, objectName, client.ArrowStreamFormat)
 	if err != nil {
 		log.Fatalf("Failed to create OSS write stream: %v", err)
 	}
 
 	for {
-		response, err := stream.Recv()
-		if err != nil {
-			if err == io.EOF {
-				// 读取流结束，关闭OSS写入流
-				finalResponse, err := ossStream.CloseAndRecv()
-				if err != nil {
-					log.Fatalf("Failed to close OSS stream: %v", err)
+		select {
+		case <-readCtx.Done():
+			log.Printf("Read context canceled: %v", readCtx.Err())
+			return
+		case <-writeCtx.Done():
+			log.Printf("Write context canceled: %v", writeCtx.Err())
+			return
+		default:
+			response, err := stream.Recv()
+			if err != nil {
+				if err == io.EOF {
+					// 读取流结束，关闭OSS写入流
+					finalResponse, err := ossStream.CloseAndRecv()
+					if err != nil {
+						log.Printf("Failed to close OSS stream: %v", err)
+					} else {
+						log.Printf("Final OSS write response: %v", finalResponse)
+					}
+					return
 				}
-				log.Printf("Final OSS write response: %v", finalResponse)
-				break
+				log.Printf("Error receiving data: %v", err)
+				return
 			}
-			log.Fatalf("Error receiving data: %v", err)
-		}
 
-		// 解码 arrow_batch 数据
-		arrowBatch := response.GetArrowBatch() // 获取 arrow_batch 字段
-		if len(arrowBatch) == 0 {
-			log.Println("Received empty arrow batch.")
-			continue
-		}
+			// 解码 arrow_batch 数据
+			arrowBatch := response.GetArrowBatch()
+			if len(arrowBatch) == 0 {
+				log.Println("Received empty arrow batch.")
+				continue
+			}
 
-		// 直接使用流发送数据
-		chunkRequest := &pb.OSSWriteRequest{
-			Chunk: arrowBatch,
+			// 使用流发送数据
+			chunkRequest := &pb.OSSWriteRequest{
+				Chunk: arrowBatch,
+			}
+			if err := ossStream.Send(chunkRequest); err != nil {
+				log.Printf("Failed to send data chunk: %v", err)
+				return
+			}
+			log.Printf("Sent chunk: %v", len(chunkRequest.Chunk))
 		}
-		if err := ossStream.Send(chunkRequest); err != nil {
-			log.Fatalf("Failed to send data chunk: %v", err)
-		}
-		log.Printf("Sent chunk: %v", len(chunkRequest.Chunk))
 	}
-
 }
