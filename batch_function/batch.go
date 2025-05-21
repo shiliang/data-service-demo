@@ -58,15 +58,17 @@ func main() {
 	}*/
 
 	request := &pb.BatchReadRequest{
-		AssetName:   "bigdatatest",
-		ChainInfoId: 1,
-		PlatformId:  1,
-		SparkConfig: sparkConfig,
-		BucketName:  "data-service",
-		DataObject:  "output.arrow",
-		JoinColumns: []string{"id"},
-		Mode:        pb.OperationMode_OPERATION_MODE_JOIN,
-		TempTable:   "xwcfrfer",
+		AssetName:     "bigdatatest",
+		ChainInfoId:   1,
+		PlatformId:    1,
+		SparkConfig:   sparkConfig,
+		BucketName:    "data-service",
+		DataObject:    "output.arrow",
+		JoinColumns:   []string{"id"},
+		Mode:          pb.OperationMode_OPERATION_MODE_PSI_JOIN,
+		TempTable:     "bbfe90678f98",
+		OrderByColumn: "id",
+		TargetTable:   "kjhrdwwf",
 	}
 
 	// 1. 提交作业
@@ -79,7 +81,7 @@ func main() {
 	// 2. 轮询查询作业状态
 	for {
 		time.Sleep(5 * time.Second)
-		statusResp, err := dataServiceClient.GetJobStatus(ctx, request.RequestId)
+		statusResp, err := dataServiceClient.GetJobStatus(ctx, resp.JobId)
 		if err != nil {
 			log.Printf("查询作业状态失败: %v", err)
 			continue
@@ -87,6 +89,7 @@ func main() {
 		fmt.Println("当前作业状态：", statusResp.Status)
 		if statusResp.Status == pb.JobStatus_JOB_STATUS_SUCCEEDED || statusResp.Status == pb.JobStatus_JOB_STATUS_FAILED {
 			fmt.Println("作业完成，最终状态：", statusResp.Status)
+			fmt.Println(statusResp)
 			break
 		}
 	}
